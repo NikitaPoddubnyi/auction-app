@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String @id @default(uuid())
+  email     String @unique
+  firstName String
+  lastName  String
+  password  String
+
+  lots      Lot[] @relation("UserLots")
+  wonLots   Lot[]  @relation("WonLots")
+  bids      Bid[] @relation("UserBids")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+ @@map("users")
+}
+
+
+model Lot {
+  id           String    @id @default(uuid())
+  title        String
+
+  description  String?
+  startPrice   Float
+  currentPrice Float
+  endTime      DateTime
+  status       LotStatus @default(ACTIVE)
+
+  logo         LotLogo?  @relation("LotLogos")
+
+  creatorId    String    @map("creator_id")
+  creator      User      @relation("UserLots", fields: [creatorId], references: [id])
+
+  winnerId     String?   @map("winner_id")
+  winner       User?     @relation("WonLots", fields: [winnerId], references: [id])
+
+  bids         Bid[]     @relation("LotBids")
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+ @@map("lots")
+}
+
+model LotLogo {
+  id        String      @id @default(cuid())
+  url       String
+  
+  lot       Lot        @relation("LotLogos", fields: [lotId], references: [id], onDelete: Cascade)
+  lotId    String      @unique @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("lot_logos")
+}
+
+model Bid {
+  id        String @id @default(uuid())
+  amount    Float?
+
+  lotId     String @map("lot_id")
+  lot       Lot    @relation("LotBids", fields: [lotId], references: [id])
+
+  bidderId  String @map("bidder_id")
+  bidder    User   @relation("UserBids", fields: [bidderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+ @@map("bids")
+}
+
+
+enum LotStatus {
+  ACTIVE
+  CLOSED
+}
