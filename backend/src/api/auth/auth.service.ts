@@ -29,7 +29,7 @@ export class AuthService {
   ) {}
 
   async register(res: Response, dto: RegisterRequest) {
-    const { firstName, lastName, email, password} = dto;
+    const { firstName, lastName, email, password } = dto;
     const existUser = await this.prismaService.user.findUnique({
       where: { email },
     });

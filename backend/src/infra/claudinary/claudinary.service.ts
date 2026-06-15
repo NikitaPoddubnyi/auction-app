@@ -4,9 +4,7 @@ import streamifier from 'streamifier';
 
 @Injectable()
 export class CloudinaryService {
-  async uploadLotLogo(
-    file: Express.Multer.File,
-  ): Promise<UploadApiResponse> {
+  async uploadLotLogo(file: Express.Multer.File): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -15,7 +13,8 @@ export class CloudinaryService {
         },
         (error, result) => {
           if (error) return reject(error);
-          if (!result) return reject(new Error('Cloudinary result is undefined'));
+          if (!result)
+            return reject(new Error('Cloudinary result is undefined'));
           resolve(result);
         },
       );

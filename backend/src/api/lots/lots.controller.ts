@@ -1,11 +1,21 @@
-import { Body, Controller, Get, Param, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { Authorization, Authorized} from 'src/common/decorators';
+import { Authorization, Authorized } from 'src/common/decorators';
 import { CreateLotDto } from './dto/create-lot.dto';
 import { LotsService } from './lots.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -17,11 +27,8 @@ export class LotsController {
   @ApiOperation({ summary: 'Список активних лотів' })
   @ApiOkResponse({ description: 'Масив активних лотів' })
   @Get('all')
-  findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 12
-  ) {
-    return this.lotsService.findAll(page, limit);
+  findAll(@Query('page') page = '1', @Query('limit') limit = '12') {
+    return this.lotsService.findAll(Number(page), Number(limit));
   }
 
   @ApiOperation({ summary: 'Деталі лота' })
@@ -33,7 +40,8 @@ export class LotsController {
 
   @ApiOperation({ summary: 'Створити лот' })
   @ApiCreatedResponse({ description: 'Лот створено' })
-  @ApiBearerAuth() @Authorization()
+  @ApiBearerAuth()
+  @Authorization()
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   create(

@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsDateString, IsNotEmpty, IsNumber, IsString, Min, IsDate, } from 'class-validator';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  IsDate,
+} from 'class-validator';
 
 export class CreateLotDto {
   @ApiProperty({ example: 'Vintage Guitar' })
@@ -18,7 +25,7 @@ export class CreateLotDto {
   @Min(0)
   startPrice: number;
 
-@IsDateString()
-@IsNotEmpty()
-endTime: string;
+  @IsDateString()
+  @IsNotEmpty()
+  endTime: string;
 }

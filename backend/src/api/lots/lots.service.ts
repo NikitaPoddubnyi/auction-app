@@ -10,74 +10,78 @@ import { CloudinaryService } from 'src/infra/claudinary/claudinary.service';
 
 @Injectable()
 export class LotsService {
-  constructor(private readonly prisma: PrismaService, private readonly cloudinaryService: CloudinaryService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
-async create(
-  creatorId: string,
-  dto: CreateLotDto,
-  file?: Express.Multer.File,
-): Promise<Lot> {
-  const endTime = new Date(dto.endTime);
-  if (endTime <= new Date()) {
-    throw new BadRequestException('endTime must be in the future');
+  async create(
+    creatorId: string,
+    dto: CreateLotDto,
+    file?: Express.Multer.File,
+  ): Promise<Lot> {
+    const endTime = new Date(dto.endTime);
+    if (endTime <= new Date()) {
+      throw new BadRequestException('endTime must be in the future');
+    }
+
+    let logoUrl: string | undefined;
+    if (file) {
+      const uploaded = await this.cloudinaryService.uploadLotLogo(file);
+      logoUrl = uploaded.secure_url;
+    }
+
+    return this.prisma.lot.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        startPrice: dto.startPrice,
+        currentPrice: dto.startPrice,
+        endTime,
+        creatorId,
+
+        ...(logoUrl && {
+          logo: {
+            create: { url: logoUrl },
+          },
+        }),
+      },
+      include: {
+        creator: { select: { id: true, firstName: true, lastName: true } },
+        logo: true,
+      },
+    });
   }
 
-  let logoUrl: string | undefined;
-  if (file) {
-    const uploaded = await this.cloudinaryService.uploadLotLogo(file);
-    logoUrl = uploaded.secure_url;
-  }
+  async findAll(page = 1, limit = 12): Promise<{ items: Lot[]; meta: any }> {
+    const skip = (page - 1) * limit;
 
-  return this.prisma.lot.create({
-    data: {
-      title: dto.title,
-      description: dto.description,
-      startPrice: dto.startPrice,
-      currentPrice: dto.startPrice,
-      endTime,
-      creatorId,
-
-      ...(logoUrl && {
-        logo: {
-          create: { url: logoUrl },
+    const [items, total] = await Promise.all([
+      this.prisma.lot.findMany({
+        where: { status: LotStatus.ACTIVE },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          creator: { select: { id: true, firstName: true, lastName: true } },
+          _count: { select: { bids: true } },
+          logo: true,
         },
       }),
-    },
-    include: {
-      creator: { select: { id: true, firstName: true, lastName: true } },
-      logo: true,
-    },
-  });
-}
+      this.prisma.lot.count({
+        where: { status: LotStatus.ACTIVE },
+      }),
+    ]);
 
-  async findAll(page = 1, limit = 12): Promise<{items: Lot[], meta: any}> {
-	const skip = (page - 1) * limit;
-	
-	const [items, total] = await Promise.all([
-		this.prisma.lot.findMany({
-			where: { status: LotStatus.ACTIVE },
-			orderBy: { createdAt: 'desc' },
-			skip,
-			take: limit,
-			include: {
-				creator: { select: { id: true, firstName: true, lastName: true } },
-				_count: { select: { bids: true } },
-			},
-		}),
-		this.prisma.lot.count({
-		where: { status: LotStatus.ACTIVE },
-		}),
-	]);
-
-	return {
-		items,
-		meta: {
-			total,
-			page,
-			limit,
-			totalPages: Math.ceil(total / limit),
-		},
-	};
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: string): Promise<Lot> {
@@ -86,6 +90,7 @@ async create(
       include: {
         creator: { select: { id: true, firstName: true, lastName: true } },
         winner: { select: { id: true, firstName: true, lastName: true } },
+        logo: true,
         bids: {
           orderBy: { createdAt: 'desc' },
           include: {

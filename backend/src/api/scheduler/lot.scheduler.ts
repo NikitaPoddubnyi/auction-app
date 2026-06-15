@@ -8,7 +8,10 @@ import { AuctionGateway } from '../gateway/auction.gateway';
 export class LotScheduler {
   private readonly logger = new Logger(LotScheduler.name);
 
-  constructor(private readonly prisma: PrismaService, private readonly gateway: AuctionGateway) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gateway: AuctionGateway,
+  ) {}
 
   @Cron('*/1 * * * *')
   async closeExpiredLots() {
@@ -19,7 +22,7 @@ export class LotScheduler {
       },
       include: {
         bids: {
-          orderBy: { amount: 'desc' }, 
+          orderBy: { amount: 'desc' },
         },
       },
     });
@@ -31,7 +34,7 @@ export class LotScheduler {
     for (const lot of expiredLots) {
       const winnerBid = lot.bids[0];
 
-         const updatedLot = await this.prisma.lot.update({
+      const updatedLot = await this.prisma.lot.update({
         where: { id: lot.id },
         data: {
           status: LotStatus.CLOSED,
@@ -48,10 +51,8 @@ export class LotScheduler {
         winner: updatedLot.winner ?? null,
       });
 
-	  this.logger.log(
-        `Lot ${lot.id} closed. Winner: ${
-          winnerBid?.bidderId ?? 'no bids'
-        }`,
+      this.logger.log(
+        `Lot ${lot.id} closed. Winner: ${winnerBid?.bidderId ?? 'no bids'}`,
       );
     }
   }

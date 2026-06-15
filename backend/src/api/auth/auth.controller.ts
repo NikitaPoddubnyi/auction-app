@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -18,6 +19,7 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthResponse, LoginDto, RegisterRequest } from './dto';
+import { Authorization, Authorized } from 'src/common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -63,6 +65,16 @@ export class AuthController {
     @Body() dto: LoginDto,
   ) {
     return this.authService.login(res, dto);
+  }
+
+  @ApiOperation({ summary: 'Поточний користувач' })
+  @ApiOkResponse({ description: 'Дані поточного користувача' })
+  @ApiUnauthorizedResponse({ description: 'Недійсний токен' })
+  @Authorization()
+  @HttpCode(HttpStatus.OK)
+  @Get('me')
+  async me(@Authorized() user: any) {
+    return user;
   }
 
   @ApiOkResponse({

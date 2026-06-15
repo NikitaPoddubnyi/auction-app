@@ -62,5 +62,4 @@ export class RegisterRequest {
   @MinLength(6, { message: 'Password should be at least 6 characters' })
   @MaxLength(128, { message: 'Password should not exceed 128 characters' })
   password: string;
-
 }

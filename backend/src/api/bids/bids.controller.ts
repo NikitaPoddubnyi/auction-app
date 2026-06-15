@@ -18,9 +18,10 @@ export class BidsController {
   @Get('all')
   findAll(
     @Param('lotId') lotId: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 12,) {
-    return this.bidsService.findByLot(lotId, page, limit);
+    @Query('page') page = '1',
+    @Query('limit') limit = '12',
+  ) {
+    return this.bidsService.findByLot(lotId, Number(page), Number(limit));
   }
 
   @ApiOperation({ summary: 'Зробити ставку' })

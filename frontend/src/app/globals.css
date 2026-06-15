@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: var(--font-cormorant), serif;
+  --font-sans: var(--font-inter), sans-serif;
+
+  --color-gold: #c9a84c;
+  --color-gold-light: #e2c97e;
+  --color-gold-dark: #9c7a2e;
+
+  --color-stone-cream: #f5f0e8;
+  --color-stone-warm: #8c8070;
+  --color-stone-dark: #1c1917;
+}

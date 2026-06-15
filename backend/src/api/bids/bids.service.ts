@@ -11,9 +11,16 @@ import { AuctionGateway } from '../gateway/auction.gateway';
 
 @Injectable()
 export class BidsService {
-  constructor(private readonly prisma: PrismaService, private readonly gateway: AuctionGateway) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly gateway: AuctionGateway,
+  ) {}
 
-  async create(lotId: string, bidderId: string, dto: CreateBidDto): Promise<Bid> {
+  async create(
+    lotId: string,
+    bidderId: string,
+    dto: CreateBidDto,
+  ): Promise<Bid> {
     const lot = await this.prisma.lot.findUnique({ where: { id: lotId } });
 
     if (!lot) {
@@ -28,9 +35,21 @@ export class BidsService {
       throw new ConflictException('Lot has expired');
     }
 
-	if (bidderId === lot.creatorId) {
-		throw new ConflictException('You cannot bid on your own lot');
-	}
+    if (bidderId === lot.creatorId) {
+      throw new ConflictException('You cannot bid on your own lot');
+    }
+
+    const lastBid = await this.prisma.bid.findFirst({
+      where: { lotId },
+      orderBy: { createdAt: 'desc' },
+      select: { bidderId: true },
+    });
+
+    if (lastBid?.bidderId === bidderId) {
+      throw new ConflictException(
+        'You cannot outbid yourself. Wait for another user to bid.',
+      );
+    }
 
     if (dto.amount <= lot.currentPrice) {
       throw new BadRequestException(
@@ -38,55 +57,59 @@ export class BidsService {
       );
     }
 
-const bid = await this.prisma.bid.create({
-  data: {
-    amount: dto.amount,
-    lotId,
-    bidderId,
-  },
-  include: {
-    bidder: { select: { id: true, firstName: true, lastName: true } },
-  },
-});
+    const bid = await this.prisma.bid.create({
+      data: {
+        amount: dto.amount,
+        lotId,
+        bidderId,
+      },
+      include: {
+        bidder: { select: { id: true, firstName: true, lastName: true } },
+      },
+    });
 
-await this.prisma.lot.update({
-  where: { id: lotId },
-  data: { currentPrice: dto.amount },
-});
+    await this.prisma.lot.update({
+      where: { id: lotId },
+      data: { currentPrice: dto.amount },
+    });
 
-this.gateway.notifyNewBid(lotId, {
-  amount: bid.amount as number,
-  createdAt: bid.createdAt,
-  bidder: bid.bidder,
-});
+    this.gateway.notifyNewBid(lotId, {
+      amount: bid.amount as number,
+      createdAt: bid.createdAt,
+      bidder: bid.bidder,
+    });
 
-return bid;
+    return bid;
   }
 
-  async findByLot(lotId: string, page = 1, limit = 12): Promise<{items: Bid[], meta: any}> {
-	const skip = (page - 1) * limit;
+  async findByLot(
+    lotId: string,
+    page = 1,
+    limit = 12,
+  ): Promise<{ items: Bid[]; meta: any }> {
+    const skip = (page - 1) * limit;
 
-	const [items, total] = await Promise.all([
-		this.prisma.bid.findMany({
-			where: { lotId },
-			orderBy: { createdAt: 'desc' },
-			skip,
-			take: limit,
-			include: {
-				bidder: { select: { id: true, firstName: true, lastName: true } },
-			},
-		}),
-		this.prisma.bid.count({ where: { lotId } }),
-	])
+    const [items, total] = await Promise.all([
+      this.prisma.bid.findMany({
+        where: { lotId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          bidder: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.bid.count({ where: { lotId } }),
+    ]);
 
-	return {
-		items,
-		meta: {
-			total,
-			page,
-			limit,
-			totalPages: Math.ceil(total / limit),
-		},
-	};
+    return {
+      items,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }
