@@ -7,7 +7,7 @@ export const bidsApi = {
     return data as Bid;
   },
 
-  getAll: async (lotId: string, page = 1, limit = 12) => {
+  getAll: async (lotId: string, page = 1, limit = 1) => {
     const { data } = await $axios.get(`/lots/${lotId}/bids/all`, {
       params: { page, limit },
     });

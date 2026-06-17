@@ -33,7 +33,7 @@ export function Pagination({
           disabled:hover:text-stone-warm
         "
       >
-        Prev
+        Попер
       </button>
 
       {pages.map((page, index) =>
@@ -72,7 +72,7 @@ export function Pagination({
           disabled:hover:text-stone-warm
         "
       >
-        Next
+        Наст
       </button>
     </div>
   );

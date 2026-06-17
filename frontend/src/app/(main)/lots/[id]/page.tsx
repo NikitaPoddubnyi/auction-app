@@ -100,6 +100,11 @@ export default function LotPage() {
       return;
     }
 
+    if (lot.creatorId === user?.id) {
+      setBidError('Ви не можете ставити ставку на свій лот');
+      return;
+    }
+
     setBidError('');
     setBidLoading(true);
     try {

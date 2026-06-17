@@ -26,7 +26,7 @@ export interface Bid {
 }
 
 export const lotsApi = {
-  getAll: async (page = 1, limit = 12) => {
+  getAll: async (page = 1, limit = 5) => {
     const { data } = await $axios.get('/lots/all', { params: { page, limit } });
     return data as { items: Lot[]; meta: any };
   },

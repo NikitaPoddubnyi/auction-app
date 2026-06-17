@@ -89,22 +89,18 @@ $axios.interceptors.response.use(
         return $axios(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-
         localStorage.removeItem('accessToken');
 
         if (
           typeof window !== 'undefined' &&
-          window.location.pathname !== '/login'
+          window.location.pathname !== '/login' &&
+          window.location.pathname !== '/register'
         ) {
           window.location.href = '/login';
         }
 
         return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
     }
-
-    return Promise.reject(error);
   },
 );
