@@ -6,7 +6,6 @@ import axios, {
 
 export const $axios: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000',
-
   withCredentials: true,
 });
 
@@ -25,19 +24,16 @@ const processQueue = (error: any, token: string | null = null) => {
       promise.resolve(token);
     }
   });
-
   failedQueue = [];
 };
 
 $axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('accessToken');
-
     if (token) {
       config.headers.set('Authorization', `Bearer ${token}`);
     }
   }
-
   return config;
 });
 
@@ -47,45 +43,41 @@ $axios.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest: any = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/register') ||
+      originalRequest?.url?.includes('/auth/refresh');
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          failedQueue.push({
-            resolve,
-            reject,
-          });
+          failedQueue.push({ resolve, reject });
         })
           .then((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
-
             return $axios(originalRequest);
           })
           .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
-
       isRefreshing = true;
 
       try {
         const response = await axios.post(
-          `${
-            process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'
-          }/auth/refresh`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}/auth/refresh`,
           {},
-          {
-            withCredentials: true,
-          },
+          { withCredentials: true },
         );
 
         const newAccessToken = response.data.accessToken;
-
         localStorage.setItem('accessToken', newAccessToken);
-
         processQueue(null, newAccessToken);
-
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
         return $axios(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
@@ -100,7 +92,11 @@ $axios.interceptors.response.use(
         }
 
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
+    return Promise.reject(error);
   },
 );
