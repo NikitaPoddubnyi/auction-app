@@ -100,11 +100,6 @@ export default function LotPage() {
       return;
     }
 
-    if (lot.creatorId === user?.id) {
-      setBidError('Ви не можете ставити ставку на свій лот');
-      return;
-    }
-
     setBidError('');
     setBidLoading(true);
     try {
@@ -136,6 +131,8 @@ export default function LotPage() {
     );
 
   const minBid = (lot.currentPrice ?? lot.startPrice) + 1;
+
+  const isOwner = user?.id === lot.creatorId;
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12">
@@ -247,7 +244,7 @@ export default function LotPage() {
             </div>
           )}
 
-          {!isClosed && (
+          {!isClosed && !isOwner && (
             <div className="border border-[#C9A84C]/20 p-6">
               <p className="text-xs tracking-[0.2em] uppercase text-stone-warm font-sans mb-4">
                 Зробити ставку
@@ -275,8 +272,8 @@ export default function LotPage() {
                       placeholder={String(minBid)}
                       min={minBid}
                       className="w-full bg-transparent border-b border-[#C9A84C]/40 py-3
-                                 text-stone-dark font-sans text-sm placeholder:text-stone-warm/40
-                                 focus:outline-none focus:border-gold transition-colors"
+                       text-stone-dark font-sans text-sm placeholder:text-stone-warm/40
+                       focus:outline-none focus:border-gold transition-colors"
                     />
                   </div>
 
@@ -294,8 +291,8 @@ export default function LotPage() {
                       Number(amount) <= (lot.currentPrice ?? 0)
                     }
                     className="w-full bg-stone-dark text-[#F5F0E8] py-4 text-xs tracking-[0.3em]
-                               uppercase font-sans hover:bg-gold transition-colors duration-300
-                               disabled:opacity-40 disabled:cursor-not-allowed"
+                     uppercase font-sans hover:bg-gold transition-colors duration-300
+                     disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {bidLoading ? 'Відправка...' : 'Зробити ставку'}
                   </button>
@@ -308,13 +305,21 @@ export default function LotPage() {
                   <Link
                     href={`/login?redirect=/lots/${id}`}
                     className="inline-block text-xs tracking-[0.3em] uppercase font-sans
-                               bg-stone-dark text-[#F5F0E8] px-8 py-3
-                               hover:bg-gold transition-colors duration-300"
+                     bg-stone-dark text-[#F5F0E8] px-8 py-3
+                     hover:bg-gold transition-colors duration-300"
                   >
                     Увійти
                   </Link>
                 </div>
               )}
+            </div>
+          )}
+
+          {!isClosed && isOwner && (
+            <div className="border border-[#C9A84C]/20 p-6 text-center">
+              <p className="font-sans text-sm text-stone-warm">
+                Це ваш лот — ви не можете робити на нього ставки
+              </p>
             </div>
           )}
 
@@ -333,13 +338,22 @@ export default function LotPage() {
           <div className="h-px flex-1 bg-[#C9A84C]/20" />
         </div>
 
-        {bids.length === 0 ? (
+        {!isOwner ? (
+          <div className="text-center py-12 border border-[#C9A84C]/20">
+            <p className="font-serif text-xl font-light text-stone-warm">
+              Історія ставок доступна лише власнику лота
+            </p>
+            <p className="text-xs tracking-[0.2em] uppercase font-sans text-stone-warm/50 mt-2">
+              Всього ставок: {bids.length}
+            </p>
+          </div>
+        ) : bids.length === 0 ? (
           <div className="text-center py-12 border border-[#C9A84C]/20">
             <p className="font-serif text-xl font-light text-stone-warm">
               Ставок ще немає
             </p>
             <p className="text-xs tracking-[0.2em] uppercase font-sans text-stone-warm/50 mt-2">
-              Будьте першим
+              Очікуйте на перших учасників
             </p>
           </div>
         ) : (
