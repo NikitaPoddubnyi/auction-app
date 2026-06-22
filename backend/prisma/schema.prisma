@@ -36,8 +36,8 @@ model Lot {
   title        String
 
   description  String?
-  startPrice   Float
-  currentPrice Float
+  startPrice   Decimal
+  currentPrice Decimal
   endTime      DateTime
   status       LotStatus @default(ACTIVE)
 
@@ -72,7 +72,7 @@ model LotLogo {
 
 model Bid {
   id        String @id @default(uuid())
-  amount    Float?
+  amount    Decimal?
 
   lotId     String @map("lot_id")
   lot       Lot    @relation("LotBids", fields: [lotId], references: [id])
