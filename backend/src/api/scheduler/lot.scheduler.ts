@@ -47,7 +47,7 @@ export class LotScheduler {
       });
 
       this.gateway.notifyLotClosed(lot.id, {
-        finalPrice: updatedLot.currentPrice,
+        finalPrice: updatedLot.currentPrice.toNumber(),
         winner: updatedLot.winner ?? null,
       });
 
